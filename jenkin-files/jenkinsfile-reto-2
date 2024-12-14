@@ -1,0 +1,50 @@
+pipeline {
+    agent {
+        label 'git-agent'  // Asegúrate de que 'git-agent' sea la etiqueta correcta de tu agente Windows
+    }
+    environment {
+       // Alias para que 'python' apunte a 'python3' (Ajustar para Windows)
+       PYTHONPATH='.' 
+       FLASK_APP = 'app\\api'  // Ajustar rutas de Windows
+    }
+    stages {
+        stage('GetCode') {
+            steps {
+                git 'https://github.com/FrxndysRxxqux/CP1A.git'
+            }
+        }
+        stage('StartServices'){
+            steps {
+                bat '''
+                
+                    set FLASK_APP=%FLASK_APP%
+                    start "Wiremock" java -jar "G:\\wiremock-standalone-3.10.0.jar" --port 9090 --root-dir %WORKSPACE%/test/wiremock
+                    start "Flask" python -m flask run
+                    whoami
+                    hostname
+                '''
+            }
+        }
+        stage('Test-REST'){
+            steps{
+                bat '''
+                    python -m pytest --junitxml=result-unit.xml test\\rest
+                '''
+            }      
+        }
+        stage('Test-UNIT'){
+            steps{
+                bat '''
+                   python -m pytest --junitxml=result-unit.xml test\\unit
+                '''
+            }      
+        }
+        stage('Resultados'){
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    junit 'result*.xml'
+                }      
+            }
+        }
+    }
+}
