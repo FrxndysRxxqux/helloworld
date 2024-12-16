@@ -16,7 +16,11 @@ pipeline {
                     export FLASK_APP=app/api
                     java -jar /home/fran/devops/wiremock-standalone-3.10.0.jar --port 9090 --root-dir ${WORKSPACE}/test/wiremock &
                     python3 -m flask run &
-                 '''
+                    whoami
+                    hostname
+                    sleep 5
+
+                '''
             }
         }
         stage('Test-Unit'){
@@ -40,4 +44,3 @@ pipeline {
         }
     }
 }   
-
