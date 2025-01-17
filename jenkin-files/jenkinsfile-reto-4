@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    environment {
+        // Alias para que 'python' apunte a 'python3'
+        PYTHONPATH='.' 
+    }
+    stages {
+        stage('GetCode') {
+            steps {
+                git 'https://github.com/FrxndysRxxqux/CP1A.git'
+            }
+        }
+        stage('StartServices'){
+            steps {
+                sh ''' 
+                    export FLASK_APP=app/api
+                    java -jar /home/fran/devops/wiremock-standalone-3.10.0.jar --port 9090 --root-dir ${WORKSPACE}/test/wiremock &
+                    python3 -m flask run &
+                    whoami
+                    hostname
+                    sleep 5
+
+                '''
+            }
+        }
+        stage('Test-Unit'){
+            steps{
+                sh '''
+                    python3 -m pytest --junitxml=result-unit.xml test/rest
+                '''
+            }      
+        }
+        stage('Test-Rest'){
+            steps{
+                sh '''
+                    python3 -m pytest --junitxml=result-unit.xml test/unit
+                '''
+            }      
+        }
+        stage('Resultados'){
+            steps {
+                junit 'result*.xml'
+            }
+        }
+    }
+}   
